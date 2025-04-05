@@ -292,17 +292,14 @@ will result in `ox-typst' to apply the colors to the code block."
               (title (org-export-data (org-element-property :title headline)
                                       info))
               (label (org-typst--label nil headline info)))
-    (concat
-     (format "#heading(level: %s%s)"
-             level
-             (if (or (org-export-excluded-from-toc-p headline info)
-                     (not (org-export-numbered-headline-p headline info)))
-                 ", outlined: false, numbering: none"
-               ""))
-     (format "[%s]" title)
-     label
-     "\n"
-     contents)))
+    (let* ((args (if (or (org-export-excluded-from-toc-p headline info)
+                         (not (org-export-numbered-headline-p headline info)))
+                     "outlined: false, numbering: none"
+                   nil))
+           (heading-line (if args
+                             (format "#heading(level:%s, %s)[%s]" level args title)
+                           (format "%s %s" (make-string level ?=) title))))
+      (format "\n%s %s\n\n%s" heading-line label contents))))
 
 (defun org-typst-horizontal-rule (_horizontal-rule _contents _info)
   "#line(length: 100%)")
@@ -866,7 +863,7 @@ INFO is required to determine the reference of ITEM."
                  (not (string= (org-element-type
                                 (org-element-parent-element item))
                                "headline"))))
-        (format "%s #label(%s)" (or content "") (org-typst--as-string label))
+        (format "%s <%s>" (or content "") label)
       content)))
 
 (defun org-typst--figure (content element info)
